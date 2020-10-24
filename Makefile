@@ -57,3 +57,10 @@ setup-complete:
 	rvm install ruby-2.4.4
 	echo "Installing Bundler"
 	gem install bundler
+
+docker-development:
+	cp containers/docker-compose-development.yml docker-compose.yml
+	cp config/database.yml.example config/database.yml
+	cp db/schema.rb.example db/schema.rb
+	docker-compose up
+	docker-compose exec -T web bundle exec rake db:create

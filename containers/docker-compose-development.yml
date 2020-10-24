@@ -1,0 +1,74 @@
+version: '3'
+services:
+  db:
+    image: mariadb:10.2
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=publiclaboratory
+      # - MYSQL_USER=plots
+      # - MYSQL_PASSWORD=plots
+      # - MYSQL_RANDOM_ROOT_PASSWORD=true
+    volumes:
+      - ./config/my.cnf:/etc/mysql/my.cnf
+      # for configuration
+      - /var/lib/mysql
+    networks:
+      - private
+  web:
+    ports:
+      - "4000:4000"
+    build: .
+    env_file:
+      - .env.example
+    volumes:
+      - .:/app
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+    links:
+      - redis
+      - db
+    restart: on-failure:5
+    networks:
+      - public
+      - private
+  redis:
+    image: redis:latest
+    command: redis-server
+    networks:
+      - private
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq -L log/sidekiq.log
+    depends_on:
+      - db
+      - redis
+    links:
+      - db
+      - redis
+    volumes:
+      - .:/app
+    environment:
+      - RAILS_ENV=${RAILS_ENV}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+    networks:
+      - private
+  mailman:
+    build: .
+    command: script/mailman_server
+    environment:
+      - RAILS_ENV=${RAILS_ENV}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - SERVER_ADDRESS=${SERVER_ADDRESS}
+      - USERNAME=${USERNAME}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+    volumes:
+      - .:/app
+    networks:
+      - private
+
+networks:
+  public:
+    external: true
+  private:
+    external: false

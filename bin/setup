@@ -32,13 +32,13 @@ chdir APP_ROOT do
   puts "\n== Preparing database =="
   system! 'rake db:setup'
 
-
-  puts "\n== Installing static assets =="
-  system! 'bower install'
+  #
+  # puts "\n== Installing static assets =="
+  # system! 'bower install'
 
   puts "\n== Removing old logs and tempfiles =="
   system! 'rake log:clear tmp:clear'
 
-  puts "\n== Restarting application server =="
-  system! 'passenger start'
+  # puts "\n== Restarting application server =="
+  # system! 'passenger start'
 end
